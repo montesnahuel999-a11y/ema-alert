@@ -25,10 +25,9 @@ TWILIO_TO          = os.environ.get("TWILIO_TO")     # ej: whatsapp:+549XXXXXXXX
 
 # Pares a monitorear (formato yfinance para forex)
 PARES = [
-    "EURUSD=X",
-    "GBPUSD=X",
+    "NZDJPY=X",
+    "EURJPY=X",
     "USDJPY=X",
-    "AUDUSD=X",
 ]
 
 # Parámetros de la estrategia
