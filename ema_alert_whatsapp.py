@@ -25,14 +25,13 @@ TWILIO_TO          = os.environ.get("TWILIO_TO")     # ej: whatsapp:+549XXXXXXXX
 
 # Pares a monitorear (formato yfinance para forex)
 PARES = [
-    "NZDJPY=X",
-    "EURJPY=X",
     "USDJPY=X",
+    "EURJPY=X",
+    "NZDJPY=X",
 ]
 
 # Parámetros de la estrategia
-TOLERANCIA_EMA = 0.08
-CALM_FACTOR    = 0.8
+CALM_FACTOR    = 9999
 CALM_PROMEDIO  = 20
 
 INTERVALO_SEG  = 300    # chequea cada 5 minutos
@@ -99,14 +98,11 @@ def calcular_señales(par: str) -> dict:
 
     body     = (close - open_).abs()
     avg_body = body.rolling(CALM_PROMEDIO).mean()
-    calm     = body < (avg_body * CALM_FACTOR)
-    calm_approach = calm & calm.shift(1) & calm.shift(2)
-
     alcista = (close > ema20) & (close > ema50) & (close > ema100)
     bajista = (close < ema20) & (close < ema50) & (close < ema100)
 
-    long_base  = near_any & calm_approach & alcista
-    short_base = near_any & calm_approach & bajista
+    long_base  = near_any & alcista
+    short_base = near_any & bajista
 
     long_signal  = long_base  & ~long_base.shift(1).fillna(False)
     short_signal = short_base & ~short_base.shift(1).fillna(False)
