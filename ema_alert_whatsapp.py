@@ -31,6 +31,7 @@ PARES = [
 ]
 
 # Parámetros de la estrategia
+TOLERANCIA_EMA = 0.5
 CALM_FACTOR    = 9999
 CALM_PROMEDIO  = 20
 
