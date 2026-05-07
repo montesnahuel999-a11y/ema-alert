@@ -1,5 +1,5 @@
 """
-EMA 20/50/100 Alert - Forex - WhatsApp via Twilio
+EMA 20/50/100 Alert - Forex - Telegram
 =================================================
 Las credenciales se leen desde variables de entorno (Railway).
 NO escribas tus datos directamente en este archivo.
@@ -8,20 +8,17 @@ NO escribas tus datos directamente en este archivo.
 import os
 import time
 import logging
-from datetime import datetime
+import requests
 
 import pandas as pd
 import yfinance as yf
-from twilio.rest import Client
 
 # ─────────────────────────────────────────────
 #  CONFIGURACIÓN — se leen desde Railway
 # ─────────────────────────────────────────────
 
-TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN  = os.environ.get("TWILIO_AUTH_TOKEN")
-TWILIO_FROM        = os.environ.get("TWILIO_FROM")   # ej: whatsapp:+14155238886
-TWILIO_TO          = os.environ.get("TWILIO_TO")     # ej: whatsapp:+549XXXXXXXXXX
+TELEGRAM_TOKEN   = os.environ.get("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
 # Pares a monitorear (formato yfinance para forex)
 PARES = [
@@ -51,21 +48,24 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────
-#  TWILIO
+#  TELEGRAM
 # ─────────────────────────────────────────────
 
-twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-
-def enviar_whatsapp(mensaje: str) -> None:
+def enviar_telegram(mensaje: str) -> None:
     try:
-        twilio_client.messages.create(
-            from_=TWILIO_FROM,
-            to=TWILIO_TO,
-            body=mensaje,
-        )
-        log.info(f"WhatsApp enviado: {mensaje}")
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": mensaje,
+            "parse_mode": "Markdown"
+        }
+        r = requests.post(url, json=payload, timeout=10)
+        if r.status_code == 200:
+            log.info(f"Telegram enviado: {mensaje[:50]}...")
+        else:
+            log.error(f"Error Telegram: {r.text}")
     except Exception as e:
-        log.error(f"Error enviando WhatsApp: {e}")
+        log.error(f"Error enviando Telegram: {e}")
 
 # ─────────────────────────────────────────────
 #  LÓGICA DE ESTRATEGIA
@@ -97,8 +97,6 @@ def calcular_señales(par: str) -> dict:
         ((close - ema100).abs() < TOLERANCIA_EMA)
     )
 
-    body     = (close - open_).abs()
-    avg_body = body.rolling(CALM_PROMEDIO).mean()
     alcista = (close > ema20) & (close > ema50) & (close > ema100)
     bajista = (close < ema20) & (close < ema50) & (close < ema100)
 
@@ -137,7 +135,7 @@ def marcar_notificado(par: str, ts) -> None:
 # ─────────────────────────────────────────────
 
 def main():
-    log.info("▶ Monitor EMA iniciado")
+    log.info("▶ Monitor EMA iniciado - Telegram")
     log.info(f"  Pares:     {', '.join(PARES)}")
     log.info(f"  Intervalo: {INTERVALO_SEG}s  |  Timeframe: {TIMEFRAME}")
 
@@ -154,23 +152,23 @@ def main():
             if r["long"] and not ya_notificado(par, r["timestamp"]):
                 msg = (
                     f"📈 *LONG - {nombre}*\n"
-                    f"Toque suave EMA en {TIMEFRAME}\n"
+                    f"Toque EMA en {TIMEFRAME}\n"
                     f"Precio: {r['precio']:.5f}\n"
                     f"EMA20: {r['ema20']:.5f} | EMA50: {r['ema50']:.5f} | EMA100: {r['ema100']:.5f}\n"
                     f"Hora vela: {r['timestamp']}"
                 )
-                enviar_whatsapp(msg)
+                enviar_telegram(msg)
                 marcar_notificado(par, r["timestamp"])
 
             elif r["short"] and not ya_notificado(par, r["timestamp"]):
                 msg = (
                     f"📉 *SHORT - {nombre}*\n"
-                    f"Toque suave EMA en {TIMEFRAME}\n"
+                    f"Toque EMA en {TIMEFRAME}\n"
                     f"Precio: {r['precio']:.5f}\n"
                     f"EMA20: {r['ema20']:.5f} | EMA50: {r['ema50']:.5f} | EMA100: {r['ema100']:.5f}\n"
                     f"Hora vela: {r['timestamp']}"
                 )
-                enviar_whatsapp(msg)
+                enviar_telegram(msg)
                 marcar_notificado(par, r["timestamp"])
 
             else:
