@@ -22,18 +22,16 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
 # Pares a monitorear (formato yfinance para forex)
 PARES = [
+    "EURUSD=X",
     "USDJPY=X",
-    "EURJPY=X",
-    "NZDJPY=X",
+    "GBPUSD=X",
 ]
 
-# Parámetros de la estrategia
-TOLERANCIA_EMA = 0.5
-CALM_FACTOR    = 9999
-CALM_PROMEDIO  = 20
+# Tolerancia en porcentaje del precio (0.05%)
+TOLERANCIA_PCT = 0.0005
 
 INTERVALO_SEG  = 300    # chequea cada 5 minutos
-TIMEFRAME      = "15m"  # velas de 15 minutos
+TIMEFRAME      = "30m"  # velas de 30 minutos
 PERIODOS_DATOS = "7d"
 
 # ─────────────────────────────────────────────
@@ -91,10 +89,13 @@ def calcular_señales(par: str) -> dict:
     ema50  = close.ewm(span=50,  adjust=False).mean()
     ema100 = close.ewm(span=100, adjust=False).mean()
 
+    # Tolerancia dinámica basada en porcentaje del precio
+    tolerancia = close * TOLERANCIA_PCT
+
     near_any = (
-        ((close - ema20).abs()  < TOLERANCIA_EMA) |
-        ((close - ema50).abs()  < TOLERANCIA_EMA) |
-        ((close - ema100).abs() < TOLERANCIA_EMA)
+        ((close - ema20).abs()  < tolerancia) |
+        ((close - ema50).abs()  < tolerancia) |
+        ((close - ema100).abs() < tolerancia)
     )
 
     alcista = (close > ema20) & (close > ema50) & (close > ema100)
@@ -138,6 +139,7 @@ def main():
     log.info("▶ Monitor EMA iniciado - Telegram")
     log.info(f"  Pares:     {', '.join(PARES)}")
     log.info(f"  Intervalo: {INTERVALO_SEG}s  |  Timeframe: {TIMEFRAME}")
+    log.info(f"  Tolerancia: {TOLERANCIA_PCT*100}% del precio")
 
     while True:
         for par in PARES:
