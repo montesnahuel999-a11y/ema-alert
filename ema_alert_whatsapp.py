@@ -1,7 +1,7 @@
 """
 EMA 20/50/100 Alert - Forex - Telegram
 =================================================
-Las credenciales se leen desde variables de entorno (Railway).
+Las credenciales se leen desde variables de entorno (GitHub Actions).
 NO escribas tus datos directamente en este archivo.
 """
 
@@ -14,7 +14,7 @@ import pandas as pd
 import yfinance as yf
 
 # ─────────────────────────────────────────────
-#  CONFIGURACIÓN — se leen desde Railway
+#  CONFIGURACIÓN — se leen desde variables de entorno
 # ─────────────────────────────────────────────
 
 TELEGRAM_TOKEN   = os.environ.get("TELEGRAM_TOKEN")
@@ -27,12 +27,11 @@ PARES = [
     "GBPUSD=X",
 ]
 
-# Tolerancia en porcentaje del precio (0.05%)
+# Tolerancia dinámica basada en porcentaje del precio (0.05%)
 TOLERANCIA_PCT = 0.0005
 
-INTERVALO_SEG  = 300    # chequea cada 5 minutos
-TIMEFRAME      = "30m"  # velas de 30 minutos
-PERIODOS_DATOS = "7d"
+TIMEFRAME      = "1h"   # velas de 1 hora
+PERIODOS_DATOS = "30d"
 
 # ─────────────────────────────────────────────
 #  LOGGING
@@ -120,64 +119,45 @@ def calcular_señales(par: str) -> dict:
     }
 
 # ─────────────────────────────────────────────
-#  ESTADO — evita notificaciones duplicadas
-# ─────────────────────────────────────────────
-
-ultimo_aviso: dict = {}
-
-def ya_notificado(par: str, ts) -> bool:
-    return ultimo_aviso.get(par) == ts
-
-def marcar_notificado(par: str, ts) -> None:
-    ultimo_aviso[par] = ts
-
-# ─────────────────────────────────────────────
-#  LOOP PRINCIPAL
+#  LOOP PRINCIPAL — corre una vez y termina
 # ─────────────────────────────────────────────
 
 def main():
-    log.info("▶ Monitor EMA iniciado - Telegram")
+    log.info("▶ Monitor EMA - Telegram")
     log.info(f"  Pares:     {', '.join(PARES)}")
-    log.info(f"  Intervalo: {INTERVALO_SEG}s  |  Timeframe: {TIMEFRAME}")
-    log.info(f"  Tolerancia: {TOLERANCIA_PCT*100}% del precio")
+    log.info(f"  Timeframe: {TIMEFRAME}")
 
-    while True:
-        for par in PARES:
-            try:
-                r = calcular_señales(par)
-            except Exception as e:
-                log.error(f"{par}: error — {e}")
-                continue
+    for par in PARES:
+        try:
+            r = calcular_señales(par)
+        except Exception as e:
+            log.error(f"{par}: error — {e}")
+            continue
 
-            nombre = par.replace("=X", "")
+        nombre = par.replace("=X", "")
 
-            if r["long"] and not ya_notificado(par, r["timestamp"]):
-                msg = (
-                    f"📈 *LONG - {nombre}*\n"
-                    f"Toque EMA en {TIMEFRAME}\n"
-                    f"Precio: {r['precio']:.5f}\n"
-                    f"EMA20: {r['ema20']:.5f} | EMA50: {r['ema50']:.5f} | EMA100: {r['ema100']:.5f}\n"
-                    f"Hora vela: {r['timestamp']}"
-                )
-                enviar_telegram(msg)
-                marcar_notificado(par, r["timestamp"])
+        if r["long"]:
+            msg = (
+                f"📈 *LONG - {nombre}*\n"
+                f"Toque EMA en {TIMEFRAME}\n"
+                f"Precio: {r['precio']:.5f}\n"
+                f"EMA20: {r['ema20']:.5f} | EMA50: {r['ema50']:.5f} | EMA100: {r['ema100']:.5f}\n"
+                f"Hora vela: {r['timestamp']}"
+            )
+            enviar_telegram(msg)
 
-            elif r["short"] and not ya_notificado(par, r["timestamp"]):
-                msg = (
-                    f"📉 *SHORT - {nombre}*\n"
-                    f"Toque EMA en {TIMEFRAME}\n"
-                    f"Precio: {r['precio']:.5f}\n"
-                    f"EMA20: {r['ema20']:.5f} | EMA50: {r['ema50']:.5f} | EMA100: {r['ema100']:.5f}\n"
-                    f"Hora vela: {r['timestamp']}"
-                )
-                enviar_telegram(msg)
-                marcar_notificado(par, r["timestamp"])
+        elif r["short"]:
+            msg = (
+                f"📉 *SHORT - {nombre}*\n"
+                f"Toque EMA en {TIMEFRAME}\n"
+                f"Precio: {r['precio']:.5f}\n"
+                f"EMA20: {r['ema20']:.5f} | EMA50: {r['ema50']:.5f} | EMA100: {r['ema100']:.5f}\n"
+                f"Hora vela: {r['timestamp']}"
+            )
+            enviar_telegram(msg)
 
-            else:
-                log.info(f"{nombre}: sin señal")
-
-        log.info(f"Próximo chequeo en {INTERVALO_SEG}s...\n")
-        time.sleep(INTERVALO_SEG)
+        else:
+            log.info(f"{nombre}: sin señal")
 
 
 if __name__ == "__main__":
