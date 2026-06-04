@@ -1,4 +1,4 @@
-"""
+ """
 EMA 20/50/100 Alert - Forex - Telegram
 =================================================
 Las credenciales se leen desde variables de entorno (GitHub Actions).
@@ -25,7 +25,20 @@ PARES = [
     "EURUSD=X",
     "USDJPY=X",
     "GBPUSD=X",
+    "AUDUSD=X",   # Dólar Australiano
+    "USDCAD=X",   # Dólar Canadiense
+    "GC=F",       # Oro (XAU/USD)
 ]
+
+# Nombres legibles para cada par
+NOMBRES = {
+    "EURUSD=X": "EURUSD",
+    "USDJPY=X": "USDJPY",
+    "GBPUSD=X": "GBPUSD",
+    "AUDUSD=X": "AUDUSD",
+    "USDCAD=X": "USDCAD",
+    "GC=F":     "XAUUSD (Oro)",
+}
 
 # Tolerancia dinámica basada en porcentaje del precio (0.05%)
 TOLERANCIA_PCT = 0.0005
@@ -134,14 +147,17 @@ def main():
             log.error(f"{par}: error — {e}")
             continue
 
-        nombre = par.replace("=X", "")
+        nombre = NOMBRES.get(par, par.replace("=X", ""))
+
+        # El oro cotiza en dólares por onza, usamos 2 decimales
+        decimales = 2 if par == "GC=F" else 5
 
         if r["long"]:
             msg = (
                 f"📈 *LONG - {nombre}*\n"
                 f"Toque EMA en {TIMEFRAME}\n"
-                f"Precio: {r['precio']:.5f}\n"
-                f"EMA20: {r['ema20']:.5f} | EMA50: {r['ema50']:.5f} | EMA100: {r['ema100']:.5f}\n"
+                f"Precio: {r['precio']:.{decimales}f}\n"
+                f"EMA20: {r['ema20']:.{decimales}f} | EMA50: {r['ema50']:.{decimales}f} | EMA100: {r['ema100']:.{decimales}f}\n"
                 f"Hora vela: {r['timestamp']}"
             )
             enviar_telegram(msg)
@@ -150,8 +166,8 @@ def main():
             msg = (
                 f"📉 *SHORT - {nombre}*\n"
                 f"Toque EMA en {TIMEFRAME}\n"
-                f"Precio: {r['precio']:.5f}\n"
-                f"EMA20: {r['ema20']:.5f} | EMA50: {r['ema50']:.5f} | EMA100: {r['ema100']:.5f}\n"
+                f"Precio: {r['precio']:.{decimales}f}\n"
+                f"EMA20: {r['ema20']:.{decimales}f} | EMA50: {r['ema50']:.{decimales}f} | EMA100: {r['ema100']:.{decimales}f}\n"
                 f"Hora vela: {r['timestamp']}"
             )
             enviar_telegram(msg)
