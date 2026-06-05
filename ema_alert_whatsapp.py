@@ -1,4 +1,4 @@
- """
+"""
 EMA 20/50/100 Alert - Forex - Telegram
 =================================================
 Las credenciales se leen desde variables de entorno (GitHub Actions).
