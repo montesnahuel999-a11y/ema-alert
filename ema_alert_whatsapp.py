@@ -27,7 +27,7 @@ PARES = [
     "GBPUSD=X",
     "AUDUSD=X",   # Dólar Australiano
     "USDCAD=X",   # Dólar Canadiense
-    "GC=F",       # Oro (XAU/USD)
+    "^GSPC",      # S&P 500
 ]
 
 # Nombres legibles para cada par
@@ -37,14 +37,14 @@ NOMBRES = {
     "GBPUSD=X": "GBPUSD",
     "AUDUSD=X": "AUDUSD",
     "USDCAD=X": "USDCAD",
-    "GC=F":     "XAUUSD (Oro)",
+    "^GSPC":    "SP500",
 }
 
 # Tolerancia dinámica basada en porcentaje del precio (0.05%)
 TOLERANCIA_PCT = 0.0005
 
-TIMEFRAME      = "1h"   # velas de 1 hora
-PERIODOS_DATOS = "30d"
+TIMEFRAME      = "4h"   # velas de 4 horas
+PERIODOS_DATOS = "60d"
 
 # ─────────────────────────────────────────────
 #  LOGGING
@@ -149,8 +149,8 @@ def main():
 
         nombre = NOMBRES.get(par, par.replace("=X", ""))
 
-        # El oro cotiza en dólares por onza, usamos 2 decimales
-        decimales = 2 if par == "GC=F" else 5
+        # El SP500 cotiza en puntos de índice, usamos 2 decimales
+        decimales = 2 if par == "^GSPC" else 5
 
         if r["long"]:
             msg = (
