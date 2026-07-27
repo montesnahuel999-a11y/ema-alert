@@ -44,7 +44,7 @@ NOMBRES = {
 TOLERANCIA_PCT = 0.0005
 
 TIMEFRAME      = "1h"   # velas de 1 horas
-PERIODOS_DATOS = "60d"
+PERIODOS_DATOS = "30d"
 
 # ─────────────────────────────────────────────
 #  LOGGING
