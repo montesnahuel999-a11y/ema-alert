@@ -1,5 +1,5 @@
 """
-EMA 20/50/100 Alert - Forex - Telegram
+EMA 50/100 Alert - Forex - Telegram
 =================================================
 Las credenciales se leen desde variables de entorno (GitHub Actions).
 NO escribas tus datos directamente en este archivo.
@@ -43,7 +43,7 @@ NOMBRES = {
 # Tolerancia dinámica basada en porcentaje del precio (0.05%)
 TOLERANCIA_PCT = 0.0005
 
-TIMEFRAME      = "4h"   # velas de 4 horas
+TIMEFRAME      = "1h"   # velas de 1 horas
 PERIODOS_DATOS = "60d"
 
 # ─────────────────────────────────────────────
@@ -105,13 +105,12 @@ def calcular_señales(par: str) -> dict:
     tolerancia = close * TOLERANCIA_PCT
 
     near_any = (
-        ((close - ema20).abs()  < tolerancia) |
         ((close - ema50).abs()  < tolerancia) |
         ((close - ema100).abs() < tolerancia)
     )
 
-    alcista = (close > ema20) & (close > ema50) & (close > ema100)
-    bajista = (close < ema20) & (close < ema50) & (close < ema100)
+    alcista = (close > ema50) & (close > ema100)
+    bajista = (close < ema50) & (close < ema100)
 
     long_base  = near_any & alcista
     short_base = near_any & bajista
@@ -125,7 +124,6 @@ def calcular_señales(par: str) -> dict:
         "long":      bool(long_signal.iloc[idx]),
         "short":     bool(short_signal.iloc[idx]),
         "precio":    float(close.iloc[idx]),
-        "ema20":     float(ema20.iloc[idx]),
         "ema50":     float(ema50.iloc[idx]),
         "ema100":    float(ema100.iloc[idx]),
         "timestamp": df.index[idx],
@@ -157,7 +155,7 @@ def main():
                 f"📈 *LONG - {nombre}*\n"
                 f"Toque EMA en {TIMEFRAME}\n"
                 f"Precio: {r['precio']:.{decimales}f}\n"
-                f"EMA20: {r['ema20']:.{decimales}f} | EMA50: {r['ema50']:.{decimales}f} | EMA100: {r['ema100']:.{decimales}f}\n"
+                f"EMA50: {r['ema50']:.{decimales}f} | EMA100: {r['ema100']:.{decimales}f}\n"
                 f"Hora vela: {r['timestamp']}"
             )
             enviar_telegram(msg)
@@ -167,7 +165,7 @@ def main():
                 f"📉 *SHORT - {nombre}*\n"
                 f"Toque EMA en {TIMEFRAME}\n"
                 f"Precio: {r['precio']:.{decimales}f}\n"
-                f"EMA20: {r['ema20']:.{decimales}f} | EMA50: {r['ema50']:.{decimales}f} | EMA100: {r['ema100']:.{decimales}f}\n"
+                f"EMA50: {r['ema50']:.{decimales}f} | EMA100: {r['ema100']:.{decimales}f}\n"
                 f"Hora vela: {r['timestamp']}"
             )
             enviar_telegram(msg)
