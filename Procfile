@@ -1,1 +1,1 @@
-worker: python ema_alert_whatsapp.py
+worker: python news_monitor.py
