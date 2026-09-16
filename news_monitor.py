@@ -87,7 +87,7 @@ logging.basicConfig(
     format="%(asctime)s  %(levelname)s  %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-log = logging.getLogger(_name_)
+log = logging.getLogger(___name___)
 
 # ─────────────────────────────────────────────
 #  TELEGRAM
