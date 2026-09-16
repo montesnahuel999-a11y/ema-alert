@@ -1,28 +1,36 @@
-name: EMA Alert
+name: Monitor de Noticias
 
 on:
   schedule:
-    - cron: '0 * * * *'  # corre cada hora exacta
-  workflow_dispatch:       # permite correrlo manualmente
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
 
 jobs:
-  run-alert:
+  monitor-noticias:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v3
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
 
-      - name: Instalar Python
-        uses: actions/setup-python@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Instalar dependencias
-        run: pip install yfinance pandas requests
+        run: pip install feedparser requests deep-translator
 
-      - name: Correr estrategia
+      - name: Correr el monitor de noticias
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python ema_alert_whatsapp.py
+        run: python news_monitor.py
+
+      - name: Guardar el estado
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add noticias_enviadas.json calendario_avisado.json || true
+          git diff --staged --quiet || git commit -m "Actualizar estado [skip ci]"
+          git
