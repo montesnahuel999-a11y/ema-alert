@@ -1,1 +1,1 @@
-worker: python news_monitor.py
+ worker: python ema_touch_bot.py
